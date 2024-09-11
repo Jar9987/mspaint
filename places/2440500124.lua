@@ -205,7 +205,7 @@ function Script.Functions.ESP(args: ESP)
     end
 
     if ESPManager.IsDoubleDoor then
-        for _, door in pairs(ESPManager.Object:GetChilren()) do
+        for _, door in pairs(ESPManager.Object:GetChildren()) do
             if not door.Name == "Door" then continue end
 
             local highlight = Instance.new("Highlight") do
@@ -990,13 +990,13 @@ function Script.Functions.SetupCharacterConnection(newCharacter)
     if isMines then
         if character then
             Script.Connections["AnticheatBypassTheMines"] = character:GetAttributeChangedSignal("Climbing"):Connect(function()                
-                
-                if character:GetAttribute("Climbing") then
+                if Toggles.TheMinesAnticheatBypass.Value and character:GetAttribute("Climbing") then
                     task.wait(1)
                     character:SetAttribute("Climbing", false)
 
                     bypassed = true
                     Script.Functions.Alert("Bypassed the anticheat successfully, this will only last until the next cutscene!", 7)
+		    if workspace:FindFirstChild("_internal_mspaint_acbypassprogress") then workspace:FindFirstChild("_internal_mspaint_acbypassprogress"):Destroy() end
                 end
             end)
         end
