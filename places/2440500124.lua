@@ -8,6 +8,7 @@ local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 --// Variables \\--
 local fireTouch = firetouchinterest or firetouchtransmitter
@@ -114,10 +115,8 @@ local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer.PlayerGui
 local mainUI = playerGui:WaitForChild("MainUI")
 local mainGame = mainUI:WaitForChild("Initiator"):WaitForChild("Main_Game")
-local mainGameSrc = require(mainGame)
 
 local playerScripts = localPlayer.PlayerScripts
-local controlModule = require(playerScripts:WaitForChild("PlayerModule"):WaitForChild("ControlModule"))
 
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 local alive = localPlayer:GetAttribute("Alive")
@@ -660,66 +659,70 @@ function Script.Functions.ChildCheck(child, includeESP)
     end
 
     if child:IsA("Model") then
-        if mainGameSrc.stopcam and child.Name == "ElevatorBreaker" and Toggles.AutoBreakerSolver.Value then
-            local autoConnections = {}
-            local using = false
-
-            if not child:GetAttribute("Solving") then
-                child:SetAttribute("Solving", true)
-                using = true 
-
-                local code = child:FindFirstChild("Code", true)
-
-                local breakers = {}
-                for _, breaker in pairs(child:GetChildren()) do
-                    if breaker.Name == "BreakerSwitch" then
-                        local id = string.format("%02d", breaker:GetAttribute("ID"))
-                        breakers[id] = breaker
-                    end
-                end
-
-                if code and code:FindFirstChild("Frame") then
-                    local correct = child.Box.Correct
-                    local used = {}
-                    
-                    autoConnections["Reset"] = correct:GetPropertyChangedSignal("Playing"):Connect(function()
-                        if correct.Playing then
-                            table.clear(used)
+        if child.Name == "ElevatorBreaker" then
+            local designatedCameraCFrame = workspace:FindFirstChild("ElevatorBreakerCameraCFrame", true)
+            local isInMinigame = (designatedCameraCFrame.Position == camera.CFrame.Position)
+            if isInMinigame and Toggles.AutoBreakerSolver.Value then
+                local autoConnections = {}
+                local using = false
+    
+                if not child:GetAttribute("Solving") then
+                    child:SetAttribute("Solving", true)
+                    using = true 
+    
+                    local code = child:FindFirstChild("Code", true)
+    
+                    local breakers = {}
+                    for _, breaker in pairs(child:GetChildren()) do
+                        if breaker.Name == "BreakerSwitch" then
+                            local id = string.format("%02d", breaker:GetAttribute("ID"))
+                            breakers[id] = breaker
                         end
-                    end)
-
-                    autoConnections["Code"] = code:GetPropertyChangedSignal("Text"):Connect(function()
-                        task.wait(0.1)
-                        local newCode = code.Text
-                        local isEnabled = code.Frame.BackgroundTransparency == 0
-
-                        local breaker = breakers[newCode]
-
-                        if newCode == "??" and #used == 9 then
-                            for i = 1, 10 do
-                                local id = string.format("%02d", i)
-
-                                if not table.find(used, id) then
-                                    breaker = breakers[id]
+                    end
+    
+                    if code and code:FindFirstChild("Frame") then
+                        local correct = child.Box.Correct
+                        local used = {}
+                        
+                        autoConnections["Reset"] = correct:GetPropertyChangedSignal("Playing"):Connect(function()
+                            if correct.Playing then
+                                table.clear(used)
+                            end
+                        end)
+    
+                        autoConnections["Code"] = code:GetPropertyChangedSignal("Text"):Connect(function()
+                            task.wait(0.1)
+                            local newCode = code.Text
+                            local isEnabled = code.Frame.BackgroundTransparency == 0
+    
+                            local breaker = breakers[newCode]
+    
+                            if newCode == "??" and #used == 9 then
+                                for i = 1, 10 do
+                                    local id = string.format("%02d", i)
+    
+                                    if not table.find(used, id) then
+                                        breaker = breakers[id]
+                                    end
                                 end
                             end
-                        end
-
-                        if breaker then
-                            table.insert(used, newCode)
-                            if breaker:GetAttribute("Enabled") ~= isEnabled then
-                                Script.Functions.EnableBreaker(breaker, isEnabled)
+    
+                            if breaker then
+                                table.insert(used, newCode)
+                                if breaker:GetAttribute("Enabled") ~= isEnabled then
+                                    Script.Functions.EnableBreaker(breaker, isEnabled)
+                                end
                             end
-                        end
-                    end)
+                        end)
+                    end
                 end
+    
+                repeat
+                    task.wait()
+                until not child or not isInMinigame or not Toggles.AutoBreakerSolver.Value or not using
+    
+                if child then child:SetAttribute("Solving", nil) end
             end
-
-            repeat
-                task.wait()
-            until not child or not mainGameSrc.stopcam or not Toggles.AutoBreakerSolver.Value or not using
-
-            if child then child:SetAttribute("Solving", nil) end
         end
 
         if isMines and Toggles.TheMinesAnticheatBypass.Value and child.Name == "Ladder" then
@@ -987,13 +990,11 @@ function Script.Functions.SetupCharacterConnection(newCharacter)
     if isMines then
         if character then
             Script.Connections["AnticheatBypassTheMines"] = character:GetAttributeChangedSignal("Climbing"):Connect(function()                
-                if not Toggles.TheMinesAnticheatBypass.Value then return cleanup() end
                 
                 if character:GetAttribute("Climbing") then
                     task.wait(1)
                     character:SetAttribute("Climbing", false)
-    
-                    cleanup()
+
                     bypassed = true
                     Script.Functions.Alert("Bypassed the anticheat successfully, this will only last until the next cutscene!", 7)
                 end
@@ -1260,63 +1261,72 @@ local AutomationGroupBox = Tabs.Main:AddRightGroupbox("Automation") do
             local autoConnections = {}
             local using = false
 
-            if mainGameSrc.stopcam and workspace.CurrentRooms:FindFirstChild("100") then
+            if workspace.CurrentRooms:FindFirstChild("100") then
                 local elevatorBreaker = workspace.CurrentRooms["100"]:FindFirstChild("ElevatorBreaker")
 
                 if elevatorBreaker and not elevatorBreaker:GetAttribute("Solving") then
-                    elevatorBreaker:SetAttribute("Solving", true)
-                    using = true 
-
-                    local code = elevatorBreaker:FindFirstChild("Code", true)
-
-                    local breakers = {}
-                    for _, breaker in pairs(elevatorBreaker:GetChildren()) do
-                        if breaker.Name == "BreakerSwitch" then
-                            local id = string.format("%02d", breaker:GetAttribute("ID"))
-                            breakers[id] = breaker
-                        end
-                    end
-
-                    if code and code:FindFirstChild("Frame") then
-                        local correct = elevatorBreaker.Box.Correct
-                        local used = {}
-                        
-                        autoConnections["Reset"] = correct:GetPropertyChangedSignal("Playing"):Connect(function()
-                            if correct.Playing then
-                                table.clear(used)
+                    local isInMinigame = (elevatorBreaker.DoorHinge or elevatorBreaker:FindFirstChildWhichIsA("HingeConstant")).TargetAngle ~= 0
+                    if isInMinigame then
+                        elevatorBreaker:SetAttribute("Solving", true)
+                        using = true 
+    
+                        local code = elevatorBreaker:FindFirstChild("Code", true)
+    
+                        local breakers = {}
+                        for _, breaker in pairs(elevatorBreaker:GetChildren()) do
+                            if breaker.Name == "BreakerSwitch" then
+                                local id = string.format("%02d", breaker:GetAttribute("ID"))
+                                breakers[id] = breaker
                             end
-                        end)
-
-                        autoConnections["Code"] = code:GetPropertyChangedSignal("Text"):Connect(function()
-                            task.wait(0.1)
-                            local newCode = code.Text
-                            local isEnabled = code.Frame.BackgroundTransparency == 0
-
-                            local breaker = breakers[newCode]
-
-                            if newCode == "??" and #used == 9 then
-                                for i = 1, 10 do
-                                    local id = string.format("%02d", i)
-
-                                    if not table.find(used, id) then
-                                        breaker = breakers[id]
+                        end
+    
+                        if code and code:FindFirstChild("Frame") then
+                            local correct = elevatorBreaker.Box.Correct
+                            local used = {}
+                            
+                            autoConnections["Reset"] = correct:GetPropertyChangedSignal("Playing"):Connect(function()
+                                if correct.Playing then
+                                    table.clear(used)
+                                end
+                            end)
+    
+                            autoConnections["Code"] = code:GetPropertyChangedSignal("Text"):Connect(function()
+                                task.wait(0.1)
+                                local newCode = code.Text
+                                local isEnabled = code.Frame.BackgroundTransparency == 0
+    
+                                local breaker = breakers[newCode]
+    
+                                if newCode == "??" and #used == 9 then
+                                    for i = 1, 10 do
+                                        local id = string.format("%02d", i)
+    
+                                        if not table.find(used, id) then
+                                            breaker = breakers[id]
+                                        end
                                     end
                                 end
-                            end
-
-                            if breaker then
-                                table.insert(used, newCode)
-                                if breaker:GetAttribute("Enabled") ~= isEnabled then
-                                    Script.Functions.EnableBreaker(breaker, isEnabled)
+    
+                                if breaker then
+                                    table.insert(used, newCode)
+                                    if breaker:GetAttribute("Enabled") ~= isEnabled then
+                                        Script.Functions.EnableBreaker(breaker, isEnabled)
+                                    end
                                 end
-                            end
-                        end)
+                            end)
+                        end
                     end
+                end
+
+                local isInMinigame = false
+                
+                if elevatorBreaker then
+                    isInMinigame = (elevatorBreaker.DoorHinge or elevatorBreaker:FindFirstChildWhichIsA("HingeConstant")).TargetAngle ~= 0
                 end
 
                 repeat
                     task.wait()
-                until not elevatorBreaker or not mainGameSrc.stopcam or not Toggles.AutoBreakerSolver.Value or not using
+                until not elevatorBreaker or not isInMinigame or not Toggles.AutoBreakerSolver.Value or not using
 
                 if elevatorBreaker then elevatorBreaker:SetAttribute("Solving", nil) end
             end
@@ -1561,10 +1571,11 @@ local SelfGroupBox = Tabs.Visuals:AddRightGroupbox("Self") do
         Rounding = 0
     })
     
+    --[[ TODO: Find alternative way to disable camera shake
     SelfGroupBox:AddToggle("NoCamShake", {
         Text = "No Camera Shake",
         Default = false,
-    })
+    })]]
 
     SelfGroupBox:AddToggle("HidingTransparency", {
         Text = "Translucent " .. HidingPlaceName[floor.Value],
@@ -1576,7 +1587,8 @@ local SelfGroupBox = Tabs.Visuals:AddRightGroupbox("Self") do
         Default = 0.5,
         Min = 0,
         Max = 1,
-        Rounding = 1
+        Rounding = 1,
+        Compact = true
     })
 end
 
@@ -1655,7 +1667,7 @@ task.spawn(function()
                                 task.wait(0.25)
                             end
 
-                            repeat task.wait() until not mainGameSrc.stopcam
+                            task.wait(7.5 + 0.25) -- determined from inspecting the decompiled code
                         end
 
                         if damHandler:FindFirstChild("PlayerBarriers2") then
@@ -1666,7 +1678,7 @@ task.spawn(function()
                                 task.wait(0.25)
                             end
 
-                            repeat task.wait() until not mainGameSrc.stopcam
+                            task.wait(7.5 + 0.25) -- determined from inspecting the decompiled code
                         end
 
                         if damHandler:FindFirstChild("PlayerBarriers3") then
@@ -1828,10 +1840,16 @@ Toggles.Fly:OnChanged(function(value)
 
     if value then
         Script.Connections["Fly"] = RunService.RenderStepped:Connect(function()
-            local moveVector = controlModule:GetMoveVector()
-            local velocity = -((camera.CFrame.LookVector * moveVector.Z) - (camera.CFrame.RightVector * moveVector.X)) * Options.FlySpeed.Value
+            local moveVector = Vector3.zero
 
-            Script.Temp.FlyBody.Velocity = velocity
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveVector += camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveVector -= camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveVector += camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveVector -= camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveVector += camera.CFrame.UpVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveVector -= camera.CFrame.UpVector end
+
+            Script.Temp.FlyBody.Velocity = moveVector * Options.FlySpeed.Value
         end)
     else
         if Script.Connections["Fly"] then
@@ -1873,6 +1891,10 @@ Options.PromptReachMultiplier:OnChanged(function(value)
             prompt.MaxActivationDistance = prompt:GetAttribute("Distance") * value
         end
     end
+end)
+
+Toggles.AutoHeartbeat:OnChanged(function(value)
+    mainGame.Heartbeat.Enabled = not value
 end)
 
 Toggles.AntiHalt:OnChanged(function(value)
@@ -2198,19 +2220,6 @@ end)
 
 --// Connections \\--
 
-local mtHook; mtHook = hookmetamethod(game, "__namecall", function(self, ...)
-    local args = {...}
-    local namecallMethod = getnamecallmethod()
-
-    if namecallMethod == "FireServer" and self.Name == "ClutchHeartbeat" and Toggles.AutoHeartbeat.Value then
-        return
-    elseif namecallMethod == "Destroy" and self.Name == "RunnerNodes" then
-        return
-    end
-
-    return mtHook(self, ...)
-end)
-
 Library:GiveSignal(workspace.ChildAdded:Connect(function(child)
     task.delay(0.1, function()
         if table.find(EntityName, child.Name) then
@@ -2287,7 +2296,6 @@ Library:GiveSignal(playerGui.ChildAdded:Connect(function(child)
                 mainGame = mainUI:WaitForChild("Initiator"):WaitForChild("Main_Game")
 
                 if mainGame then
-                    mainGameSrc = require(mainGame)
                     if not mainGame:WaitForChild("RemoteListener", 5) then return end
 
                     if Toggles.AntiScreech.Value then
@@ -2310,14 +2318,9 @@ Library:GiveSignal(Lighting:GetPropertyChangedSignal("Ambient"):Connect(function
 end))
 
 Library:GiveSignal(RunService.RenderStepped:Connect(function()
-    if mainGameSrc then
-        mainGameSrc.fovtarget = Options.FOV.Value
-
-        if Toggles.NoCamShake.Value then
-            mainGameSrc.csgo = CFrame.new()
-        end
-    end
-
+    camera.FieldOfView = Options.FOV.Value
+    
+    
     if character then
         if isMines and Toggles.FastLadder.Value and character:GetAttribute("Climbing") then
             character:SetAttribute("SpeedBoostBehind", 50)
@@ -2436,8 +2439,6 @@ task.spawn(Script.Functions.SetupCharacterConnection, character)
 --// Library Load \\--
 
 Library:OnUnload(function()
-    -- disconnect hook
-    if mtHook then hookmetamethod(game, "__namecall", mtHook) end
 
     if character then
         character:SetAttribute("SpeedBoostBehind", 0)
@@ -2465,16 +2466,16 @@ Library:OnUnload(function()
         end
     end
 
-    if mainGameSrc then
-        mainGameSrc.fovtarget = 70
-    end
+    camera.FieldOfView = 70
 
     if collision then
-        collision.CanCollide = not mainGameSrc.crouching
+        collision.CanCollide = not character:GetAttribute("Crouching")
         if collision:FindFirstChild("CollisionCrouch") then
-            collision.CollisionCrouch.CanCollide = mainGameSrc.crouching
+            collision.CollisionCrouch.CanCollide = character:GetAttribute("Crouching")
         end
     end
+
+    mainGame.Heartbeat.Enabled = true
 
     if collisionClone then collisionClone:Destroy() end
     if Script.Temp.FlyBody then Script.Temp.FlyBody:Destroy() end
