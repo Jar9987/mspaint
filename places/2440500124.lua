@@ -660,8 +660,7 @@ function Script.Functions.ChildCheck(child, includeESP)
 
     if child:IsA("Model") then
         if child.Name == "ElevatorBreaker" then
-            local designatedCameraCFrame = workspace:FindFirstChild("ElevatorBreakerCameraCFrame", true)
-            local isInMinigame = (designatedCameraCFrame.Position == camera.CFrame.Position)
+            local isInMinigame = (child.DoorHinge or child:FindFirstChildWhichIsA("HingeConstant")).TargetAngle ~= 0
             if isInMinigame and Toggles.AutoBreakerSolver.Value then
                 local autoConnections = {}
                 local using = false
