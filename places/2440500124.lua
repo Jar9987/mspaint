@@ -448,7 +448,7 @@ function Script.Functions.HidingSpotESP(spot)
     Script.Functions.ESP({
         Type = "HidingSpot",
         Object = spot,
-        Text = HidingPlaceName[floor.Value],
+        Text = spot:GetAttribute("LoadModule") == "Bed" and "Bed" or HidingPlaceName[floor.Value],
         Color = Options.HidingSpotEspColor.Value
     })
 end
