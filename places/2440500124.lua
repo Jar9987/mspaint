@@ -2550,3 +2550,5 @@ SaveManager:BuildConfigSection(Tabs["UI Settings"])
 ThemeManager:ApplyToTab(Tabs["UI Settings"])
 
 SaveManager:LoadAutoloadConfig()
+
+Script.Functions.Alert("You are playing on mspaint's compatibility branch. This means that some features may have been removed due to missing executor functionality. Thank you for your understanding.", 8)
