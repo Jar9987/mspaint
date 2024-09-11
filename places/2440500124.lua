@@ -2331,9 +2331,14 @@ Library:GiveSignal(Lighting:GetPropertyChangedSignal("Ambient"):Connect(function
 end))
 
 Library:GiveSignal(RunService.RenderStepped:Connect(function()
+    if not Toggles.ShowCustomCursor.Value and Library.Toggled then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        UserInputService.MouseIcon = "rbxassetid://2833720882"
+        UserInputService.MouseIconEnabled = true
+    end
+    
     camera.FieldOfView = Options.FOV.Value
-    
-    
+
     if character then
         if isMines and Toggles.FastLadder.Value and character:GetAttribute("Climbing") then
             character:SetAttribute("SpeedBoostBehind", 50)
