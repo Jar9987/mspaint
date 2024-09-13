@@ -2318,9 +2318,11 @@ task.spawn(function()
                 Text = "Anti-Jeff (FE)",
                 Default = false
             })
+
+            Fools_BypassGroupBox:AddDivider()
     
-            Fools_BypassGroupBox:AddToggle("GodmodeNoclipBypassFools", {
-                Text = "Godmode Noclip Bypass",
+            Fools_BypassGroupBox:AddToggle("GodmodeFools", {
+                Text = "Godmode",
                 Default = false
             })
     
