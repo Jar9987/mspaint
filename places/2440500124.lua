@@ -991,7 +991,8 @@ function Script.Functions.SetupCharacterConnection(newCharacter)
 
         Script.Connections["Oxygen"] = character:GetAttributeChangedSignal("Oxygen"):Connect(function()
             if character:GetAttribute("Oxygen") < 100 and Toggles.NotifyOxygen.Value then
-                firesignal(remotesFolder.Caption.OnClientEvent, string.format("Oxygen: %.1f", character:GetAttribute("Oxygen")))
+                --firesignal(remotesFolder.Caption.OnClientEvent, string.format("Oxygen: %.1f", character:GetAttribute("Oxygen")))
+                Script.Functions.Captions(string.format("Oxygen: %.1f", character:GetAttribute("Oxygen")))
             end
         end)
     end
