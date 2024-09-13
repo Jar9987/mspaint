@@ -481,7 +481,9 @@ function Script.Functions.ObjectiveESP(room)
                 Color = Options.ObjectiveEspColor.Value
             })
         end
-    elseif room:FindFirstChild("Gate") ~= nil then
+    end
+
+    if room:FindFirstChild("Gate") ~= nil then
         local lever = room:FindFirstChild("LeverForGate", true)
 
         if lever then
