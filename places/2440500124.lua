@@ -280,12 +280,6 @@ function Script.Functions.ESP(args: ESP)
         ESPManager.Object.PrimaryPart.Transparency = 0.99
     end
 
-    local tracer = Drawing.new("Line") do
-        tracer.Color = ESPManager.Color
-        tracer.Thickness = 1
-        tracer.Visible = false
-    end
-
     if ESPManager.IsDoubleDoor then
         for _, door in pairs(ESPManager.Object:GetChildren()) do
             if not door.Name == "Door" then continue end
@@ -343,8 +337,6 @@ function Script.Functions.ESP(args: ESP)
     function ESPManager.SetColor(newColor: Color3)
         ESPManager.Color = newColor
 
-        if tracer then tracer.Color = newColor end
-
         for _, highlight in pairs(ESPManager.Highlights) do
             highlight.FillColor = newColor
             highlight.OutlineColor = newColor
@@ -367,7 +359,6 @@ function Script.Functions.ESP(args: ESP)
             end
         end
 
-        if tracer then tracer:Destroy() end
         for _, highlight in pairs(ESPManager.Highlights) do
             highlight:Destroy()
         end
@@ -395,20 +386,6 @@ function Script.Functions.ESP(args: ESP)
             textLabel.Text = string.format("%s\n[%s]", ESPManager.Text, math.floor(Script.Functions.DistanceFromCharacter(ESPManager.Object)))
         else
             textLabel.Text = ESPManager.Text
-        end
-
-        if Toggles.ESPTracer.Value then
-            local position, visible = camera:WorldToViewportPoint(ESPManager.Object:GetPivot().Position)
-
-            if visible then
-                tracer.From = Vector2.new(camera.ViewportSize.X / 2, Script.Functions.GetTracerStartY(Options.ESPTracerStart.Value))
-                tracer.To = Vector2.new(position.X, position.Y)
-                tracer.Visible = true
-            else
-                tracer.Visible = false
-            end
-        else
-            tracer.Visible = false
         end
     end)
 
@@ -1670,11 +1647,6 @@ local ESPTabBox = Tabs.Visuals:AddLeftTabbox() do
     end
 
     local ESPSettingsTab = ESPTabBox:AddTab("Settings") do
-        ESPSettingsTab:AddToggle("ESPTracer", {
-            Text = "Enable Tracer",
-            Default = true,
-        })
-    
         ESPSettingsTab:AddToggle("ESPHighlight", {
             Text = "Enable Highlight",
             Default = true,
@@ -1707,15 +1679,6 @@ local ESPTabBox = Tabs.Visuals:AddLeftTabbox() do
             Min = 16,
             Max = 26,
             Rounding = 0
-        })
-
-        ESPSettingsTab:AddDropdown("ESPTracerStart", {
-            AllowNull = false,
-            Values = {"Bottom", "Center", "Top"},
-            Default = "Bottom",
-            Multi = false,
-
-            Text = "Tracer Start Position"
         })
     end
 end
