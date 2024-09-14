@@ -1689,6 +1689,11 @@ local AmbientGroupBox = Tabs.Visuals:AddRightGroupbox("Ambient") do
         Default = false,
     })
 
+    AmbientGroupBox:AddToggle("NoFog", {
+        Text = "No Fog",
+        Default = false,
+    })
+
     AmbientGroupBox:AddToggle("AntiLag", {
         Text = "Anti-Lag",
         Default = false,
@@ -1869,14 +1874,6 @@ task.spawn(function()
                 Default = false
             })
         end
-
-        local Mines_VisualGroupBox = Tabs.Floor:AddRightGroupbox("Visual") do
-            Mines_VisualGroupBox:AddToggle("NoFog", {
-                Text = "No Fog",
-                Default = true
-            })
-        end
-
         
         Toggles.TheMinesAnticheatBypass:OnChanged(function(value)
             if value then
@@ -1955,22 +1952,6 @@ task.spawn(function()
                 end
             end
         end)
-
-        Toggles.NoFog:OnChanged(function(value)
-            local fog = Lighting:FindFirstChild("CaveAtmosphere")
-
-            if fog then
-                fog.Density = value and 0 or 0.679
-            end
-        end)
-        
-        if Lighting:FindFirstChild("CaveAtmosphere") then
-            Library:GiveSignal(Lighting.CaveAtmosphere:GetPropertyChangedSignal("Density"):Connect(function()
-                if Toggles.NoFog.Value then
-                    Lighting.CaveAtmosphere.Density = 0
-                end
-            end))
-        end
     elseif isBackdoor then
         local Backdoors_AntiEntityGroupBox = Tabs.Floor:AddLeftGroupbox("Anti-Entity") do
             Backdoors_AntiEntityGroupBox:AddToggle("AntiHasteJumpscare", {
@@ -2030,14 +2011,6 @@ task.spawn(function()
             })
         end
 
-        local Rooms_VisualGroupBox = Tabs.Floor:AddRightGroupbox("Visual") do
-
-            Rooms_VisualGroupBox:AddToggle("NoFog", {
-                Text = "No Fog",
-                Default = true
-            })
-        end
-
         local Rooms_AutomationGroupBox = Tabs.Floor:AddRightGroupbox("Automation") do
             Rooms_AutomationGroupBox:AddToggle("AutoRooms", {
                 Text = "Auto Rooms",
@@ -2071,25 +2044,6 @@ task.spawn(function()
                 module.Name = value and "_A90" or "A90"
             end
         end)
-
-        local fogStart = Lighting.FogStart
-        local fogEnd = Lighting.FogEnd
-        Toggles.NoFog:OnChanged(function(value)
-            Lighting.FogEnd = value and math.huge or fogEnd
-            Lighting.FogStart = value and 0 or fogStart
-        end)
-
-        Library:GiveSignal(Lighting:GetPropertyChangedSignal("FogStart"):Connect(function()
-            fogStart = Lighting.FogStart
-
-            Lighting.FogStart = (Toggles.NoFog.Value) and 0 or fogStart
-        end))
-
-        Library:GiveSignal(Lighting:GetPropertyChangedSignal("FogEnd"):Connect(function()
-            fogEnd = Lighting.FogEnd
-
-            Lighting.FogEnd = Toggles.NoFog.Value and math.huge or fogEnd
-        end))
 
         function Script.Functions.GetAutoRoomsPathfindingGoal(): BasePart
             local entity = (workspace:FindFirstChild("A60") or workspace:FindFirstChild("A120"))
@@ -2802,6 +2756,21 @@ Toggles.Fullbright:OnChanged(function(value)
     end
 end)
 
+Toggles.NoFog:OnChanged(function(value)
+    if not Lighting:GetAttribute("FogStart") then Lighting:SetAttribute("FogStart", Lighting.FogStart) end
+    if not Lighting:GetAttribute("FogEnd") then Lighting:SetAttribute("FogEnd", Lighting.FogEnd) end
+
+    Lighting.FogStart = value and 0 or Lighting:GetAttribute("FogStart")
+    Lighting.FogEnd = value and math.huge or Lighting:GetAttribute("FogEnd")
+
+    local fog = Lighting:FindFirstChildOfClass("Atmosphere")
+    if fog then
+        if not fog:GetAttribute("Density") then fog:SetAttribute("Density", fog.Density) end
+
+        fog.Density = value and 0 or fog:GetAttribute("Density")
+    end
+end)
+
 Toggles.AntiLag:OnChanged(function(value)
     for _, object in pairs(workspace.CurrentRooms:GetDescendants()) do
         if object:IsA("BasePart") then
@@ -2994,6 +2963,18 @@ end))
 Library:GiveSignal(Lighting:GetPropertyChangedSignal("Ambient"):Connect(function()
     if Toggles.Fullbright.Value then
         Lighting.Ambient = Color3.new(1, 1, 1)
+    end
+end))
+
+Library:GiveSignal(Lighting:GetPropertyChangedSignal("FogStart"):Connect(function()
+    if Toggles.NoFog.Value then
+        Lighting.FogStart = 0
+    end
+end))
+
+Library:GiveSignal(Lighting:GetPropertyChangedSignal("FogEnd"):Connect(function()
+    if Toggles.NoFog.Value then
+        Lighting.FogEnd = math.huge
     end
 end))
 
