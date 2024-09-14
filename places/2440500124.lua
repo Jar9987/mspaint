@@ -1020,7 +1020,7 @@ function Script.Functions.SetupCharacterConnection(newCharacter)
         Script.Connections["Hiding"] = character:GetAttributeChangedSignal("Hiding"):Connect(function()
             if not character:GetAttribute("Hiding") then return end
     
-            if Toggles.HidingTransparency.Value then
+            if Toggles.TranslucentHidingSpot.Value then
                 for _, obj in pairs(workspace.CurrentRooms:GetDescendants()) do
                     if not obj:IsA("ObjectValue") and obj.Name ~= "HiddenPlayer" then continue end
     
@@ -1686,7 +1686,7 @@ local ESPTabBox = Tabs.Visuals:AddLeftTabbox() do
     end
 end
 
-local AmbientGroupBox = Tabs.Visuals:AddRightGroupbox("Ambient") do
+local AmbientGroupBox = Tabs.Visuals:AddLeftGroupbox("Ambient") do
     AmbientGroupBox:AddToggle("Fullbright", {
         Text = "Fullbright",
         Default = false,
@@ -1743,6 +1743,11 @@ local SelfGroupBox = Tabs.Visuals:AddRightGroupbox("Self") do
         Text = "No Camera Shake",
         Default = false,
     })]]
+
+    SelfGroupBox:AddToggle("NoCutscenes", {
+        Text = "No Cutscenes",
+        Default = false,
+    })
 
     SelfGroupBox:AddToggle("TranslucentHidingSpot", {
         Text = "Translucent " .. HidingPlaceName[floor.Value],
@@ -2798,6 +2803,16 @@ Toggles.AntiLag:OnChanged(function(value)
     Lighting.GlobalShadows = not value
 end)
 
+Toggles.NoCutscenes:OnChanged(function(value)
+    if not mainGame then return end
+
+    local cutscenes = mainGame:FindFirstChild("Cutscenes", true)
+    if cutscenes then
+        for _, cutscene in pairs(cutscenes:GetChildren()) do
+            cutscene.Name = value and "_" .. cutscene.Name or cutscene.Name:gsub("_", "")
+        end
+    end
+end)
 
 Toggles.TranslucentHidingSpot:OnChanged(function(value)
     if value and character:GetAttribute("Hiding") then
