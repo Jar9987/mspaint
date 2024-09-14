@@ -3043,10 +3043,13 @@ Library:GiveSignal(RunService.RenderStepped:Connect(function()
                     if player == localPlayer then continue end
                     
                     for _, tool in pairs(player.Backpack:GetChildren()) do
-                        tool:FindFirstChildWhichIsA("RemoteEvent"):FireServer()
+                        tool:FindFirstChildOfClass("RemoteEvent"):FireServer()
                     end
                     
-                    player.Character:FindFirstChildWhichIsA("Tool"):FindFirstChildWhichIsA("RemoteEvent"):FireServer()
+                    local toolRemote = player.Character:FindFirstChild("Remote", true)
+                    if toolRemote then
+                        toolRemote:FireServer()
+                    end
                 end
             end
         end
