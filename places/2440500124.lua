@@ -1707,6 +1707,8 @@ function Script.Functions.SetupCharacterConnection(newCharacter)
                     character:SetAttribute("Climbing", false)
 
                     bypassed = true
+                    Options.SpeedSlider:SetMax(45)
+                    Options.FlySpeed:SetMax(75)
                     Script.Functions.Alert("Bypassed the anticheat successfully, this will only last until the next cutscene!", 7)
 		    if workspace:FindFirstChild("_internal_mspaint_acbypassprogress") then workspace:FindFirstChild("_internal_mspaint_acbypassprogress"):Destroy() end
                 end
@@ -2527,6 +2529,9 @@ task.spawn(function()
                 if bypassed then
                     remotesFolder.ClimbLadder:FireServer()
                     bypassed = false
+
+                    Options.SpeedSlider:SetMax(Toggles.SpeedBypass.Value and 45 or (Toggles.EnableJump.Value and 3 or 7))
+                    Options.FlySpeed:SetMax(Toggles.SpeedBypass.Value and 75 or 22)
                 end
             end
         end)
@@ -2534,6 +2539,10 @@ task.spawn(function()
         Toggles.EnableJump:OnChanged(function(value)
             if character then
                 character:SetAttribute("CanJump", value)
+            end
+
+            if not value and not Toggles.SpeedBypass.Value and Options.SpeedSlider.Max ~= 7 then
+                Options.SpeedSlider:SetMax(7)
             end
         end)
 
@@ -3168,21 +3177,21 @@ end)
 
 Toggles.SpeedBypass:OnChanged(function(value)
     if value then
-        Options.SpeedSlider:SetMax(30)
-        Options.FlySpeed:SetMax(45)
+        Options.SpeedSlider:SetMax(45)
+        Options.FlySpeed:SetMax(75)
 
         while Toggles.SpeedBypass.Value and collisionClone do
             collisionClone.Massless = not collisionClone.Massless
-            task.wait(0.225)
+            task.wait(0.2)
         end
     else
         if isMines and Toggles.EnableJump.Value then
-            Options.SpeedSlider:SetMax(3)
+            Options.SpeedSlider:SetMax((Toggles.TheMinesAnticheatBypass.Value and bypassed) and 45 or 3)
         else
-            Options.SpeedSlider:SetMax(7)
+            Options.SpeedSlider:SetMax((isMines and Toggles.TheMinesAnticheatBypass.Value and bypassed) and 45 or 7)
         end
 
-        Options.FlySpeed:SetMax(22)
+        Options.FlySpeed:SetMax((isMines and Toggles.TheMinesAnticheatBypass.Value and bypassed) and 75 or 22)
         
         if collisionClone then collisionClone.Massless = true end
     end
