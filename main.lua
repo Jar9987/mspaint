@@ -245,4 +245,4 @@ task.spawn(function()
     end
     
     createAddonTab(containAddonsLoaded) -- change the warning text
-end)
+end) 
